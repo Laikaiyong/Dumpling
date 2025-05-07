@@ -116,7 +116,7 @@ export default function AgentBuilder() {
         <div className="mt-12 bg-gradient-to-r from-[#1a1a1a] to-[#2a2a2a] p-6 rounded-lg">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div>
-              <h3 className="text-xl font-bold text-white mb-2">Can't find what you need?</h3>
+              <h3 className="text-xl font-bold text-white mb-2">Can&apos;t find what you need?</h3>
               <p className="text-gray-400">Build a custom agent with exactly the capabilities you want.</p>
             </div>
             <Link href="/agent-builder/custom">
