@@ -344,7 +344,7 @@ export default function Home() {
           </div>
 
           <div className="hidden md:flex gap-8 items-center">
-            <Link href="/docs">
+            <Link href="https://shauns-organization-6.gitbook.io/dumplings/" target="_blank">
               <motion.div
                 className="relative flex items-center gap-2 overflow-hidden group"
                 whileHover={{ scale: 1.05 }}>
