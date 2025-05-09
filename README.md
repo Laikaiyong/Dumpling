@@ -1,36 +1,32 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 🥟 Dumplings — Build AI Agents as Easily as Making Dumplings
 
-## Getting Started
+Dumplings is a no-code AI Agent Builder designed to make deploying Solana-powered AI agents as simple and delicious as folding dumplings. Whether you're a startup scaling support, a Web3 builder automating on-chain workflows, or a creator embedding assistants in Notion — Dumplings has your back.
 
-First, run the development server:
+## 🔥 What is Dumplings?
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Dumplings lets anyone create intelligent, voice-enabled, crypto-native agents in just a few steps. These agents can answer questions, query on-chain data, integrate APIs, and interact via text or voice.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Backed by Solana’s fast infrastructure and crypto billing, Dumplings is your go-to tool for Agent-as-a-Service (AaaS).
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ Key Features
 
-## Learn More
+- 🧠 **Retrieval-Augmented Generation (RAG)** — Upload docs or paste links to train your bot
+- 🧩 **Embed Anywhere** — Add to websites, Notion, or use the API
+- 🔊 **Voice Interaction** — ElevenLabs voice generation & verification
+- 💳 **Crypto Billing** — Pay in SOL with pay-as-you-go or subscription
+- 📡 **On-Chain Data** — Fetch wallet info, token prices, and more via Helius & CoinGecko
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ⚙️ Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Frontend**: Next.js, Tailwind CSS
+- **Backend**: Node.js, Express
+- **Database**: MongoDB Atlas
+- **AI**: Fetch.ai, ElevenLabs
+- **Blockchain**: Solana
+- **APIs**: Helius, CoinGecko
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
