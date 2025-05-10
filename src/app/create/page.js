@@ -1,12 +1,12 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 
-export default function CreateAgent() {
+function CreateAgentForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get("template");
@@ -479,3 +479,11 @@ export default function CreateAgent() {
     </div>
   );
 }
+
+export default function CreateAgent() {
+    return (
+      <Suspense fallback={<div>Loading...</div>}>
+        <CreateAgentForm />
+      </Suspense>
+    );
+  }
