@@ -26,12 +26,11 @@ export default function BillingPage() {
   // TODO: These state variables will be used when implementing the billing plans UI
   const [currentPlan, setCurrentPlan] = useState("pro");
   const [isChangingPlan, setIsChangingPlan] = useState(false);
-  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
-  const [usageData, setUsageData] = useState({
+  const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });  const [usageData, setUsageData] = useState({
     apiCalls: 4521,
     apiLimit: 10000,
     agentsUsed: 4,
-    agentLimit: 10,
+    agentLimit: 5,
   });
 
   // Use real wallet connection status
