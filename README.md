@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🥟 Dumplings — Build AI Agents as Easily as Making Dumplings
 
 Dumplings is a no-code AI Agent Builder designed to make deploying Solana-powered AI agents as simple and delicious as folding dumplings. Whether you're a startup scaling support, a Web3 builder automating on-chain workflows, or a creator embedding assistants in Notion — Dumplings has your back.
