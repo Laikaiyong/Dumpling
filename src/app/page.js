@@ -877,10 +877,9 @@ export default function Home() {
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               <span className="text-[#ffcc00]">Pricing</span>{" "}
               <span className="text-[#ff3131]">Plans</span>
-            </h2>
-            <p className="text-xl max-w-2xl mx-auto text-gray-200">
+            </h2>            <p className="text-xl max-w-2xl mx-auto text-gray-200">
               Choose the perfect plan for your AI agents with our flexible
-              pricing options. All plans are charged in SOL tokens.
+              pricing options. All paid plans are charged monthly in SOL tokens.
             </p>
           </motion.div>
 
@@ -941,9 +940,7 @@ export default function Home() {
               <div className="p-8 pt-14 backdrop-blur-sm bg-black/30 h-full flex flex-col">
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black px-8 py-2 border-2 border-[#ff3131] rounded-full">
                   <h3 className="text-xl font-bold text-[#ffcc00]">Starter</h3>
-                </div>
-
-                <div className="mb-6 text-center">
+                </div>                <div className="mb-6 text-center">
                   <div className="text-4xl font-bold mb-2 flex items-center justify-center">
                     <span className="text-[#ffcc00]">0.5</span>
                     <svg
@@ -980,7 +977,7 @@ export default function Home() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span>1 AI Agent</span>
+                    <span>1 Agent</span>
                   </li>
                   <li className="flex items-center">
                     <svg
@@ -993,20 +990,7 @@ export default function Home() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span>1,000 API Calls</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg
-                      className="h-5 w-5 mr-2 text-[#ffcc00]"
-                      viewBox="0 0 20 20"
-                      fill="currentColor">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span>Basic Verification</span>
+                    <span>1,000 Calls</span>
                   </li>
                   <li className="flex items-center text-gray-400">
                     <svg
@@ -1019,7 +1003,20 @@ export default function Home() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span>Advanced Analytics</span>
+                    <span>No Verification</span>
+                  </li>
+                  <li className="flex items-center text-gray-400">
+                    <svg
+                      className="h-5 w-5 mr-2 text-gray-500"
+                      viewBox="0 0 20 20"
+                      fill="currentColor">
+                      <path
+                        fillRule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>No Support</span>
                   </li>
                 </ul>
 
@@ -1149,9 +1146,7 @@ export default function Home() {
                   <h3 className="text-2xl font-bold text-[#ffcc00]">
                     Professional
                   </h3>
-                </div>
-
-                <div className="mb-8 text-center">
+                </div>                <div className="mb-8 text-center">
                   <div className="text-5xl font-bold mb-2 flex items-center justify-center">
                     <span className="text-[#ffcc00]">2.5</span>
                     <svg
@@ -1188,7 +1183,7 @@ export default function Home() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="font-medium">5 AI Agents</span>
+                    <span className="font-medium">5 Agents</span>
                   </li>
                   <li className="flex items-center">
                     <svg
@@ -1201,7 +1196,7 @@ export default function Home() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="font-medium">10,000 API Calls</span>
+                    <span className="font-medium">10,000 Calls</span>
                   </li>
                   <li className="flex items-center">
                     <svg
@@ -1214,20 +1209,20 @@ export default function Home() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="font-medium">Advanced Verification</span>
+                    <span className="font-medium">Verification Available</span>
                   </li>
-                  <li className="flex items-center">
+                  <li className="flex items-center text-gray-400">
                     <svg
-                      className="h-6 w-6 mr-2 text-[#ff3131]"
+                      className="h-6 w-6 mr-2 text-gray-500"
                       viewBox="0 0 20 20"
                       fill="currentColor">
                       <path
                         fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span className="font-medium">Basic Analytics</span>
+                    <span className="font-medium">No Support</span>
                   </li>
                 </ul>
 
@@ -1348,9 +1343,7 @@ export default function Home() {
                   <h3 className="text-xl font-bold text-[#ffcc00]">
                     Enterprise
                   </h3>
-                </div>
-
-                <div className="mb-6 text-center">
+                </div>                <div className="mb-6 text-center">
                   <div className="text-4xl font-bold mb-2 flex items-center justify-center">
                     <span className="text-[#ffcc00]">8</span>
                     <svg
@@ -1387,7 +1380,7 @@ export default function Home() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span>Unlimited AI Agents</span>
+                    <span>30 Agents</span>
                   </li>
                   <li className="flex items-center">
                     <svg
@@ -1400,7 +1393,7 @@ export default function Home() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span>100,000 API Calls</span>
+                    <span>100,000 Calls</span>
                   </li>
                   <li className="flex items-center">
                     <svg
@@ -1413,20 +1406,7 @@ export default function Home() {
                         clipRule="evenodd"
                       />
                     </svg>
-                    <span>Premium Verification</span>
-                  </li>
-                  <li className="flex items-center">
-                    <svg
-                      className="h-5 w-5 mr-2 text-[#ffcc00]"
-                      viewBox="0 0 20 20"
-                      fill="currentColor">
-                      <path
-                        fillRule="evenodd"
-                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                        clipRule="evenodd"
-                      />
-                    </svg>
-                    <span>Advanced Analytics</span>
+                    <span>Verification Available</span>
                   </li>
                   <li className="flex items-center">
                     <svg
@@ -1454,9 +1434,7 @@ export default function Home() {
                 </motion.button>
               </div>
             </motion.div>
-          </div>
-
-          {/* Pay-per-use option */}
+          </div>          {/* Free Plan */}
           <motion.div
             className="mt-16 text-center max-w-3xl mx-auto"
             initial={{ opacity: 0, y: 30 }}
@@ -1467,25 +1445,25 @@ export default function Home() {
               <div className="absolute inset-0 border-2 border-[#ff3131] rounded-full blur-sm"></div>
               <div className="absolute inset-0 border-2 border-[#ffcc00] rounded-full rotate-45 blur-sm"></div>
               <div className="relative bg-black/50 backdrop-blur-sm py-6 px-12 rounded-xl border-2 border-[#ffcc00] shadow-[0_0_25px_rgba(255,204,0,0.2)]">
-                <h3 className="text-2xl font-bold mb-4">Pay As You Go</h3>
-                <p className="mb-2">Only pay for what you use</p>
+                <h3 className="text-2xl font-bold mb-4">Free Plan</h3>
+                <p className="mb-2">Get started with no upfront cost</p>
                 <div className="flex justify-center items-center gap-6 mt-4">
                   <div className="text-center">
-                    <div className="text-2xl font-bold">0.001</div>
+                    <div className="text-2xl font-bold">1</div>
                     <div className="text-sm text-gray-400">
-                      SOL per API call
+                      Agent
+                    </div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold">100</div>
+                    <div className="text-sm text-gray-400">
+                      Free Calls
                     </div>
                   </div>
                   <div className="text-center">
                     <div className="text-2xl font-bold">0.01</div>
                     <div className="text-sm text-gray-400">
-                      SOL per verification
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">0.05</div>
-                    <div className="text-sm text-gray-400">
-                      SOL per agent/day
+                      SOL/verification
                     </div>
                   </div>
                 </div>
