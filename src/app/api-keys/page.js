@@ -64,7 +64,7 @@ export default function ApiKeysPage() {
         className="absolute inset-0 pointer-events-none z-0"
         style={{ y: backgroundY }}
       >
-        <div className="absolute inset-0 bg-[url('/chinese-pattern.png')] bg-repeat opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('https://static.vecteezy.com/system/resources/thumbnails/015/098/526/small/chinese-clouds-illustration-png.png')] bg-repeat opacity-10"></div>
       </motion.div>
 
       {/* Floating Chinese characters */}

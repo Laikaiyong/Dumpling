@@ -10,7 +10,7 @@ export default function Sidebar({ activePage }) {
   ];
 
   return (
-    <div className="w-64 bg-[#0a0a0a] border-r border-gray-800 p-4 hidden md:block">
+    <div className="z-50 w-64 bg-[#0a0a0a] border-r border-gray-800 p-4 hidden md:block">
       <div className="space-y-4">
         {menuItems.map((item) => (
           <Link 

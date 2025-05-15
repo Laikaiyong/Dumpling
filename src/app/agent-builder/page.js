@@ -1,10 +1,12 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, useScroll, useTransform, useSpring, useAnimationFrame, useMotionValue } from 'framer-motion';
 import { TemplateGallery } from './components/templateGallery';
 import Link from 'next/link';
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
+import AdminButton from "./components/adminButton";  // Import from the main components directory
 
 // Chinese zodiac animal icons for template categories
 const categoryIcons = {
@@ -37,6 +39,9 @@ export default function AgentBuilder() {
   const floatingY = useSpring(useTransform(scrollY, [0, 300], [0, -20]), {
     stiffness: 50,
   });
+
+  const [agents, setAgents] = useState([]);
+  const router = useRouter();
   
   // Mouse position transforms for interactive elements
   const transformedMouseX = useTransform(
@@ -51,37 +56,29 @@ export default function AgentBuilder() {
   );
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-    };
-
-    // Set initial window size
-    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-
-    // Handle window resize
-    const handleResize = () => {
-      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [mouseX, mouseY]);
-
-  // Floating lanterns animation
-  useAnimationFrame((t) => {
-    lanternRefs.current.forEach((lantern, i) => {
-      if (lantern) {
-        // Create gentle floating motion
-        lantern.style.transform = `translateY(${Math.sin(t / 1000 + i) * 8}px)`;
+    const fetchAgents = async () => {
+      try {
+        const response = await fetch('/api/agent');
+        if (!response.ok) {
+          throw new Error('Failed to fetch agents');
+        }
+        
+        const data = await response.json();
+        if (data.agents && Array.isArray(data.agents)) {
+          setAgents(data.agents);
+        }
+      } catch (error) {
+        console.error('Error fetching agents:', error);
       }
-    });
-  });
+    };
+    
+    fetchAgents();
+  }, []);
+  
+  // Handle agent selection
+  const handleSelectAgent = (agentId) => {
+    router.push(`/agent/${agentId}`);
+  };
 
   const templates = [
     {
@@ -133,7 +130,8 @@ export default function AgentBuilder() {
       popular: false
     },
   ];
-
+  
+  // Filter templates based on search query (keep existing code)
   const filteredTemplates = searchQuery 
     ? templates.filter(template => 
         template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -141,6 +139,48 @@ export default function AgentBuilder() {
         template.category.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : templates;
+  
+  // Filter agents based on search query
+  const filteredAgents = searchQuery
+    ? agents.filter(agent =>
+        agent.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        agent.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        agent.type?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : agents;
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+    };
+
+    // Set initial window size
+    setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+
+    // Handle window resize
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [mouseX, mouseY]);
+
+  // Floating lanterns animation
+  useAnimationFrame((t) => {
+    lanternRefs.current.forEach((lantern, i) => {
+      if (lantern) {
+        // Create gentle floating motion
+        lantern.style.transform = `translateY(${Math.sin(t / 1000 + i) * 8}px)`;
+      }
+    });
+  });
 
   return (
     <div 
@@ -152,39 +192,42 @@ export default function AgentBuilder() {
         className="absolute inset-0 pointer-events-none z-0"
         style={{ y: backgroundY }}
       >
-        <div className="absolute inset-0 bg-[url('/chinese-pattern.png')] bg-repeat opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('https://static.vecteezy.com/system/resources/thumbnails/015/098/526/small/chinese-clouds-illustration-png.png')] bg-repeat opacity-10"></div>
       </motion.div>
 
       {/* Floating Chinese characters */}
-      {chineseChars.map((char, index) => (
-        <motion.div
-          key={index}
-          className={`absolute text-6xl opacity-5 hidden md:block`}
-          style={{ 
-            top: `${10 + (index * 7) % 80}%`,
-            left: `${(index * 13) % 90}%`,
-            color: index % 2 ? '#ff3131' : '#ffcc00',
-            y: floatingY,
-            rotate: index % 3 ? 10 : -10
-          }}
-          animate={{
-            y: [0, -15, 0],
-            rotate: [index % 3 ? 10 : -10, index % 3 ? -5 : 5, index % 3 ? 10 : -10],
-            scale: [1, 1.05, 1]
-          }}
-          transition={{
-            duration: 6 + index % 4,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        >
-          {char}
-        </motion.div>
-      ))}
-      
-      {/* Dragon silhouette in background */}
+        {chineseChars.map((char, index) => (
+          <motion.div
+            key={index}
+            className={`absolute text-6xl opacity-5 hidden md:block`}
+            style={{ 
+          top: `${10 + (index * 7) % 80}%`,
+          left: `${30 + (index * 13) % 90}%`, // Adjusted left position to avoid sidebar area
+          // Ensure characters are at least 250px from the left edge where the sidebar is
+          transform: `translateX(${Math.max(250 - ((index * 13) % 90) * (windowSize.width/100), 0)}px)`,
+          color: index % 2 ? '#ff3131' : '#ffcc00',
+          y: floatingY,
+          rotate: index % 3 ? 10 : -10,
+          zIndex: -1 // Ensure characters appear behind other content
+            }}
+            animate={{
+          y: [0, -15, 0],
+          rotate: [index % 3 ? 10 : -10, index % 3 ? -5 : 5, index % 3 ? 10 : -10],
+          scale: [1, 1.05, 1]
+            }}
+            transition={{
+          duration: 6 + index % 4,
+          repeat: Infinity,
+          ease: "easeInOut"
+            }}
+          >
+            {char}
+          </motion.div>
+        ))}
+        
+        {/* Dragon silhouette in background */}
       <motion.div
-        className="absolute left-[-5%] top-[10%] w-[500px] h-[400px] opacity-[0.05] hidden lg:block"
+        className="absolute left-[20%] top-[10%] w-[500px] h-[400px] opacity-[0.05] hidden lg:block"
         style={{
           backgroundImage: "url('https://www.seekpng.com/png/full/16-166429_chinese-dragon-silhouette-chinese-dragon-silhouette-chinese-dragon.png')",
           backgroundSize: "contain",
@@ -226,8 +269,10 @@ export default function AgentBuilder() {
         }}
       />
 
+      <AdminButton />
+
       {/* Navbar */}
-      <Navbar />
+      <Navbar isDashboard={true} />
       
       <div className="flex min-h-screen pt-16">
         {/* Sidebar */}
@@ -319,7 +364,7 @@ export default function AgentBuilder() {
               <motion.div
                 className="absolute -top-3 -right-3 w-10 h-10 opacity-30"
                 style={{
-                  backgroundImage: "url('/fan-decoration.png')",
+                  backgroundImage: "url('https://ae01.alicdn.com/kf/S1d46c80508cc4728804c6fa2ad1f39aeb.png')",
                   backgroundSize: "contain",
                   backgroundPosition: "center",
                   backgroundRepeat: "no-repeat",
@@ -330,98 +375,14 @@ export default function AgentBuilder() {
             </div>
           </div>
 
-          <motion.div 
-            className="mb-12"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-          >
-            <div className="flex items-center mb-4">
-              <h2 className="text-2xl font-bold text-[#ffcc00]">Popular Templates</h2>
-              <motion.div
-                className="ml-3 text-2xl"
-                animate={{
-                  rotate: [0, 10, 0, -10, 0],
-                  y: [0, -3, 0],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}>
-                🌟
-              </motion.div>
-              
-              {/* Chinese calligraphy brush stroke under title */}
-              <motion.div
-                className="absolute mt-10 w-40 h-2"
-                style={{
-                  backgroundImage: "url('/brush-stroke.png')",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-                initial={{ scaleX: 0, opacity: 0 }}
-                animate={{ scaleX: 1, opacity: 0.7 }}
-                transition={{ delay: 0.6, duration: 0.5 }}
-              />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTemplates.filter(t => t.popular).map((template, index) => (
-                <motion.div
-                  key={template.id}
-                  className="bg-[#1a1a1a] p-6 rounded-lg border border-gray-800 relative overflow-hidden group"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ 
-                    scale: 1.02,
-                    boxShadow: "0 10px 30px rgba(255, 49, 49, 0.1)" 
-                  }}
-                >
-                  <div className="absolute -right-4 -top-4 w-20 h-20 opacity-5 group-hover:opacity-10 transition-opacity">
-                    <div className="w-full h-full bg-gradient-to-br from-[#ff3131] to-[#ffcc00] rounded-full blur-xl" />
-                  </div>
-                  
-                  <div className="flex items-start mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#ff3131]/20 to-[#ffcc00]/20 rounded-lg flex items-center justify-center text-2xl mr-4">
-                      {template.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-white mb-1">{template.name}</h3>
-                      <div className="flex items-center">
-                        <span className="text-sm bg-[#0f0f0f] px-2 py-0.5 rounded flex items-center">
-                          <span className="mr-1">{categoryIcons[template.category] || '🔮'}</span> 
-                          {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <p className="text-gray-400 mb-4 text-sm">{template.description}</p>
-                  
-                  <div className="flex justify-end">
-                    <Link href={`/agent-builder/${template.id}`}>
-                      <motion.button
-                        className="px-4 py-2 bg-[#1f1f1f] hover:bg-[#2a2a2a] text-[#ffcc00] hover:text-white rounded-md flex items-center transition-colors group-hover:bg-gradient-to-r group-hover:from-[#ff3131]/20 group-hover:to-[#ffcc00]/20"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        <span>Use Template</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                        </svg>
-                      </motion.button>
-                    </Link>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.7 }}
+            className="mt-12"
           >
             <div className="flex items-center mb-4">
-              <h2 className="text-2xl font-bold text-[#ffcc00]">All Templates</h2>
+              <h2 className="text-2xl font-bold text-[#ffcc00]">Your Agents</h2>
               <motion.div
                 className="ml-3 text-2xl"
                 animate={{
@@ -429,14 +390,14 @@ export default function AgentBuilder() {
                   y: [0, -3, 0],
                 }}
                 transition={{ duration: 3, repeat: Infinity }}>
-                📚
+                🤖
               </motion.div>
               
               {/* Chinese calligraphy brush stroke under title */}
               <motion.div
-                className="absolute mt-10 w-32 h-2"
+                className="absolute mt-10 w-28 h-2"
                 style={{
-                  backgroundImage: "url('/brush-stroke.png')",
+                  backgroundImage: "url('https://static.vecteezy.com/system/resources/thumbnails/012/634/568/small_2x/red-acrylic-paint-strokes-for-design-elements-artistic-brush-strokes-for-ornament-and-lower-thirds-isolated-background-png.png')",
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
@@ -446,63 +407,77 @@ export default function AgentBuilder() {
               />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredTemplates.map((template, index) => (
-                <motion.div
-                  key={template.id}
-                  className="bg-[#1a1a1a] p-6 rounded-lg border border-gray-800 relative overflow-hidden group"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.7 + index * 0.1 }}
-                  whileHover={{ 
-                    scale: 1.02,
-                    boxShadow: "0 10px 30px rgba(255, 49, 49, 0.1)" 
-                  }}
-                >
-                  {/* Red corner seal */}
+            {agents.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredAgents.map((agent, index) => (
                   <motion.div
-                    className="absolute top-0 right-0 w-16 h-16 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    whileHover={{ rotate: 15 }}
+                    key={agent._id}
+                    className="bg-[#1a1a1a] p-6 rounded-lg border border-gray-800 relative overflow-hidden group cursor-pointer"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.8 + index * 0.1 }}
+                    whileHover={{ 
+                      scale: 1.02,
+                      boxShadow: "0 10px 30px rgba(255, 49, 49, 0.1)" 
+                    }}
+                    onClick={() => handleSelectAgent(agent._id)}
                   >
-                    <svg viewBox="0 0 100 100" className="w-full h-full text-[#ff3131]/10">
-                      <path d="M0,0 L100,0 L100,100 Z" fill="currentColor" />
-                    </svg>
-                  </motion.div>
-                  
-                  <div className="flex items-start mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-[#ff3131]/10 to-[#ffcc00]/10 rounded-lg flex items-center justify-center text-2xl mr-4">
-                      {template.icon}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-white mb-1">{template.name}</h3>
-                      <div className="flex items-center">
-                        <span className="text-sm bg-[#0f0f0f] px-2 py-0.5 rounded flex items-center">
-                          <span className="mr-1">{categoryIcons[template.category] || '🔮'}</span> 
-                          {template.category.charAt(0).toUpperCase() + template.category.slice(1)}
-                        </span>
+                    {/* Red corner seal */}
+                    <motion.div
+                      className="absolute top-0 right-0 w-16 h-16 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      whileHover={{ rotate: 15 }}
+                    >
+                      <svg viewBox="0 0 100 100" className="w-full h-full text-[#ff3131]/10">
+                        <path d="M0,0 L100,0 L100,100 Z" fill="currentColor" />
+                      </svg>
+                    </motion.div>
+                    
+                    <div className="flex items-start mb-4">
+                      <div className="w-12 h-12 bg-gradient-to-br from-[#ff3131]/10 to-[#ffcc00]/10 rounded-lg flex items-center justify-center text-2xl mr-4">
+                        🤖
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-white mb-1">{agent.name}</h3>
+                        <div className="flex items-center">
+                          <span className="text-sm bg-[#0f0f0f] px-2 py-0.5 rounded flex items-center">
+                            <span className="mr-1">✨</span> 
+                            {agent.type || "General"}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <p className="text-gray-400 mb-4 text-sm">{template.description}</p>
-                  
-                  <div className="flex justify-end">
-                    <Link href={`/agent-builder/${template.id}`}>
+                    
+                    <p className="text-gray-400 mb-4 text-sm">{agent.description}</p>
+                    
+                    <div className="flex justify-end">
                       <motion.button
                         className="px-4 py-2 bg-[#1f1f1f] hover:bg-[#2a2a2a] text-gray-400 hover:text-white rounded-md flex items-center transition-colors"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        <span>Use Template</span>
+                        <span>Open Agent</span>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                         </svg>
                       </motion.button>
-                    </Link>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-[#1a1a1a] p-6 rounded-lg border border-gray-800 text-center">
+                <p className="text-gray-400">You haven&apos;t created any agents yet.</p>
+                <Link href="/create">
+                  <motion.button
+                    className="mt-4 px-6 py-3 bg-gradient-to-r from-[#ff3131] to-[#ffcc00] hover:opacity-90 text-black font-bold rounded-lg transition-all"
+                    whileHover={{ scale: 1.05, boxShadow: "0 0 20px rgba(255, 49, 49, 0.4)" }}
+                    whileTap={{ scale: 0.97 }}
+                  >
+                    Create Your First Agent
+                  </motion.button>
+                </Link>
+              </div>
+            )}
           </motion.div>
 
           <motion.div 
@@ -516,7 +491,7 @@ export default function AgentBuilder() {
             <motion.div
               className="absolute top-0 right-0 w-32 h-32 opacity-5 pointer-events-none"
               style={{
-                background: "url('/dragon-corner.png')",
+                background: "url('https://images.vexels.com/media/users/3/282629/isolated/preview/5b4f6600ccbdb881f8870f02419820ec-chinese-new-year-dragon-zodiac-sign.png')",
                 backgroundSize: "contain",
                 backgroundPosition: "top right",
                 backgroundRepeat: "no-repeat",

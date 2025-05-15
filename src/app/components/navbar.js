@@ -19,15 +19,7 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 function WalletConnectButton() {
   const { publicKey, connected } = useWallet();
   
-  return connected ? (
-    <div className="bg-[#1a1a1a] px-4 py-1 rounded-full flex items-center gap-2">
-      <div className="h-3 w-3 rounded-full bg-green-500"></div>
-      <span className="text-sm hidden sm:inline">Connected</span>
-      <span className="text-xs text-gray-400">
-        {publicKey ? `${publicKey.toString().slice(0, 3)}...${publicKey.toString().slice(-3)}` : ''}
-      </span>
-    </div>
-  ) : (
+  return (
     <WalletMultiButton className="wallet-connect-button" />
   );
 }

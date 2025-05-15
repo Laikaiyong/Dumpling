@@ -1,19 +1,59 @@
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
+import ReactFlow, { 
+  Controls, 
+  Background, 
+  useNodesState, 
+  useEdgesState,
+  addEdge,
+  Panel 
+} from 'reactflow';
+import 'reactflow/dist/style.css';
+
+// Initial nodes for flow diagram
+const initialNodes = [
+  {
+    id: 'start',
+    data: { label: 'Start' },
+    position: { x: 250, y: 0 },
+    type: 'input',
+    style: { background: '#ff3131', color: 'white', border: 'none', borderRadius: '8px' }
+  },
+  {
+    id: 'process',
+    data: { label: 'Process Input' },
+    position: { x: 250, y: 100 },
+    style: { background: '#222', color: 'white', border: '1px solid #444', borderRadius: '8px' }
+  },
+  {
+    id: 'end',
+    data: { label: 'Output Response' },
+    position: { x: 250, y: 200 },
+    type: 'output',
+    style: { background: '#ffcc00', color: 'black', border: 'none', borderRadius: '8px' }
+  },
+];
+
+const initialEdges = [
+  { id: 'e1-2', source: 'start', target: 'process', animated: true, style: { stroke: '#ff3131' } },
+  { id: 'e2-3', source: 'process', target: 'end', animated: true, style: { stroke: '#ffcc00' } },
+];
 
 function CreateAgentForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templateId = searchParams.get("template");
   
+  // Form state
   const [formData, setFormData] = useState({
     name: "",
     description: "",
+    systemInstructions: "", // Added system instructions field
     type: "General",
     capabilities: [],
     apiEndpoint: "",
@@ -21,14 +61,22 @@ function CreateAgentForm() {
     documentation: null
   });
   
+  // Flow diagram state
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [availableCapabilities, setAvailableCapabilities] = useState([]);
+  
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
   
   // Template data
   const templates = {
     "1": {
       name: "Token Price Bot",
       description: "Get real-time cryptocurrency data",
+      systemInstructions: "You are a token price tracking assistant. Provide accurate and timely cryptocurrency data when asked. Always cite your data source and timestamp.",
       type: "Finance",
       capabilities: ["Price Tracking", "Market Analysis"],
       apiEndpoint: "https://api.coingecko.com/api/v3",
@@ -36,6 +84,7 @@ function CreateAgentForm() {
     "2": {
       name: "Transaction Analyzer",
       description: "Query and analyze account transactions",
+      systemInstructions: "You are a blockchain transaction analysis expert. Help users understand their transaction history, identify patterns, and provide insights on wallet activity.",
       type: "Analytics",
       capabilities: ["Transaction Analysis", "Wallet Insights"],
       apiEndpoint: "https://api.helius.xyz/v0",
@@ -43,17 +92,20 @@ function CreateAgentForm() {
     "3": {
       name: "Customer Service Bot",
       description: "Support assistant based on your documentation",
+      systemInstructions: "You are a helpful customer support agent. Answer questions based on the provided documentation. If you're unsure, inform the user that you'll escalate to a human agent.",
       type: "Support",
       capabilities: ["Document Processing", "Question Answering"],
     },
     "4": {
       name: "General AI Assistant",
       description: "Text-to-speech capable AI assistant",
+      systemInstructions: "You are a helpful AI assistant designed to answer questions and assist with a wide range of tasks. Provide concise, accurate information and be courteous.",
       type: "General",
       capabilities: ["Text Generation", "Text-to-Speech"],
     }
   };
   
+  // Load template data on mount
   useEffect(() => {
     if (templateId && templates[templateId]) {
       const template = templates[templateId];
@@ -61,13 +113,30 @@ function CreateAgentForm() {
         ...formData,
         name: template.name,
         description: template.description,
+        systemInstructions: template.systemInstructions,
         type: template.type,
         capabilities: template.capabilities || [],
         apiEndpoint: template.apiEndpoint || "",
       });
     }
+    
+    // Fetch available capabilities from the API
+    const fetchCapabilities = async () => {
+      try {
+        const response = await fetch('/api/capabilities');
+        const data = await response.json();
+        if (data.capabilities) {
+          setAvailableCapabilities(data.capabilities);
+        }
+      } catch (error) {
+        console.error('Failed to fetch capabilities:', error);
+      }
+    };
+    
+    fetchCapabilities();
   }, [templateId]);
   
+  // Form input handlers
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -77,10 +146,8 @@ function CreateAgentForm() {
   };
   
   const handleFileChange = (e) => {
-    setFormData({
-      ...formData,
-      documentation: e.target.files[0],
-    });
+    const files = Array.from(e.target.files);
+    setUploadedFiles([...uploadedFiles, ...files]);
   };
   
   const handleCapabilityToggle = (capability) => {
@@ -99,15 +166,89 @@ function CreateAgentForm() {
     });
   };
   
+  // Flow diagram handlers
+  const onConnect = useCallback((params) => {
+    setEdges((edges) => addEdge({ ...params, animated: true }, edges));
+  }, [setEdges]);
+  
+  const handleAddNode = () => {
+    const newNodeId = `node-${nodes.length + 1}`;
+    const newNode = {
+      id: newNodeId,
+      data: { label: `Process Step ${nodes.length - 1}` },
+      position: { x: 250, y: (nodes.length * 100) },
+      style: { background: '#222', color: 'white', border: '1px solid #444', borderRadius: '8px' }
+    };
+    setNodes((nds) => [...nds, newNode]);
+  };
+  
+  // Submit form to API
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setLoading(false);
-    router.push("/dashboard");
+    try {
+      // 1. Create the agent first
+      const agentResponse = await fetch('/api/agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          systemInstructions: formData.systemInstructions,
+          type: formData.type,
+          capabilities: formData.capabilities,
+        }),
+      });
+      
+      const agentData = await agentResponse.json();
+      
+      if (!agentResponse.ok) {
+        throw new Error(agentData.error || 'Failed to create agent');
+      }
+      
+      const agentId = agentData.agent._id;
+      
+      // 2. Save the flow diagram if it exists
+      await fetch(`/api/agent/${agentId}/flow`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${formData.name} Flow`,
+          flowData: {
+            nodes,
+            edges,
+          },
+        }),
+      });
+      
+      // 3. Upload any documentation
+      if (uploadedFiles.length > 0) {
+        const totalFiles = uploadedFiles.length;
+        let filesProcessed = 0;
+        
+        for (const file of uploadedFiles) {
+          const formData = new FormData();
+          formData.append('file', file);
+          
+          await fetch(`/api/agent/${agentId}/knowledge`, {
+            method: 'POST',
+            body: formData,
+          });
+          
+          filesProcessed++;
+          setUploadProgress(Math.round((filesProcessed / totalFiles) * 100));
+        }
+      }
+      
+      setLoading(false);
+      router.push(`/agent/${agentId}`);
+      
+    } catch (error) {
+      console.error('Error creating agent:', error);
+      setLoading(false);
+      alert('Error creating agent: ' + error.message);
+    }
   };
   
   const nextStep = () => {
@@ -155,7 +296,7 @@ function CreateAgentForm() {
         backgroundRepeat: "no-repeat"
       }} />
       
-      <Navbar />
+      <Navbar isDashboard={true} />
       
       <div className="flex min-h-screen pt-16">
         <Sidebar activePage="/create" />
@@ -221,7 +362,7 @@ function CreateAgentForm() {
                   {stepNum}
                 </motion.div>
                 <span className="mt-2 text-sm text-gray-400">
-                  {stepNum === 1 ? "Basic Info" : stepNum === 2 ? "Capabilities" : "Configuration"}
+                  {stepNum === 1 ? "Basic Info" : stepNum === 2 ? "Capabilities" : "Advanced Config"}
                 </span>
               </div>
             ))}
@@ -267,10 +408,24 @@ function CreateAgentForm() {
                       name="description"
                       value={formData.description}
                       onChange={handleChange}
-                      className="w-full bg-[#0f0f0f] border border-gray-800 rounded-md px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#ff3131] min-h-[120px]"
+                      className="w-full bg-[#0f0f0f] border border-gray-800 rounded-md px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#ff3131] min-h-[80px]"
                       placeholder="What does your agent do?"
                       required
                     />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-gray-300 mb-2">System Instructions</label>
+                    <textarea
+                      name="systemInstructions"
+                      value={formData.systemInstructions}
+                      onChange={handleChange}
+                      className="w-full bg-[#0f0f0f] border border-gray-800 rounded-md px-4 py-3 focus:outline-none focus:ring-1 focus:ring-[#ff3131] min-h-[120px]"
+                      placeholder="Instructions that define your agent's behavior and knowledge (e.g. 'You are a helpful assistant who specializes in...')"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      System instructions help shape the behavior and knowledge of your AI agent.
+                    </p>
                   </div>
                   
                   <div>
@@ -326,11 +481,59 @@ function CreateAgentForm() {
                       ))}
                     </div>
                   </div>
+                  
+                  <div className="mt-6 border-t border-gray-800 pt-6">
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const name = prompt("Enter a new capability name:");
+                        if (name && name.trim() !== "") {
+                          handleCapabilityToggle(name.trim());
+                        }
+                      }}
+                      className="bg-[#0f0f0f] border border-gray-700 hover:border-[#ff3131] text-gray-300 px-4 py-2 rounded-md flex items-center"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                      </svg>
+                      Add Custom Capability
+                    </button>
+                  </div>
                 </div>
               )}
               
               {step === 3 && (
                 <div className="space-y-6">
+                  <div className="mb-6">
+                    <h3 className="text-xl text-[#ffcc00] mb-2">Flow Diagram</h3>
+                    <p className="text-sm text-gray-400 mb-4">
+                      Configure how your agent processes information by arranging the flow below.
+                      You can add nodes, connect them, and customize the logic.
+                    </p>
+                    
+                    <div className="h-80 border border-gray-800 rounded-lg bg-[#0f0f0f] overflow-hidden">
+                      <ReactFlow
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                        onConnect={onConnect}
+                        fitView
+                      >
+                        <Controls className="bg-[#1a1a1a] border border-gray-800 rounded-md" />
+                        <Background color="#333" gap={16} />
+                        <Panel position="top-right">
+                          <button
+                            onClick={handleAddNode}
+                            className="bg-[#1a1a1a] border border-gray-700 text-gray-300 px-2 py-1 rounded text-xs"
+                          >
+                            + Add Node
+                          </button>
+                        </Panel>
+                      </ReactFlow>
+                    </div>
+                  </div>
+                  
                   {(formData.type === "Finance" || formData.type === "Analytics") && (
                     <div>
                       <label className="block text-gray-300 mb-2">API Endpoint</label>
@@ -362,13 +565,15 @@ function CreateAgentForm() {
                   
                   {formData.capabilities.includes("Document Processing") && (
                     <div>
-                      <label className="block text-gray-300 mb-2">Upload Documentation</label>
+                      <label className="block text-gray-300 mb-2">Upload Knowledge Base Documents</label>
                       <div className="border border-dashed border-gray-700 rounded-lg p-8 text-center">
                         <input
                           type="file"
                           onChange={handleFileChange}
                           className="hidden"
                           id="file-upload"
+                          multiple
+                          accept=".pdf,.doc,.docx,.html,.svg,.txt,.md"
                         />
                         <label htmlFor="file-upload" className="cursor-pointer">
                           <div className="flex flex-col items-center">
@@ -376,13 +581,26 @@ function CreateAgentForm() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3-3m0 0l3 3m-3-3v12" />
                             </svg>
                             <p className="text-gray-400 mb-1">Drag & drop files here or click to browse</p>
-                            <p className="text-xs text-gray-500">PDF, TXT, DOCX, or MD (max 50MB)</p>
+                            <p className="text-xs text-gray-500">PDF, DOC, HTML, SVG, TXT, or MD (max 50MB)</p>
                           </div>
                         </label>
-                        {formData.documentation && (
-                          <p className="mt-4 text-sm text-green-500">
-                            File selected: {formData.documentation.name}
-                          </p>
+                        
+                        {uploadedFiles.length > 0 && (
+                          <div className="mt-4 text-left">
+                            <h4 className="text-sm font-medium text-gray-300 mb-2">
+                              {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} selected:
+                            </h4>
+                            <ul className="space-y-1 max-h-32 overflow-y-auto">
+                              {uploadedFiles.map((file, i) => (
+                                <li key={i} className="text-xs text-gray-400 flex items-center">
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  {file.name} ({Math.round(file.size / 1024)} KB)
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -456,7 +674,7 @@ function CreateAgentForm() {
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
-                        Creating...
+                        {uploadProgress > 0 ? `Creating... ${uploadProgress}%` : 'Creating...'}
                       </span>
                     ) : (
                       <span>Create Agent</span>
@@ -481,9 +699,9 @@ function CreateAgentForm() {
 }
 
 export default function CreateAgent() {
-    return (
-      <Suspense fallback={<div>Loading...</div>}>
-        <CreateAgentForm />
-      </Suspense>
-    );
-  }
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreateAgentForm />
+    </Suspense>
+  );
+}

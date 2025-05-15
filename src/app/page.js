@@ -235,7 +235,7 @@ export default function Home() {
       <div className="fixed inset-0 bg-gradient-to-b from-black/70 via-transparent to-black/70 z-0" />
 
       {/* Chinese pattern background overlay */}
-      <div className="fixed inset-0 bg-[url('/chinese-pattern.png')] opacity-10 pointer-events-none z-0" />
+      <div className="fixed inset-0 bg-[url('https://static.vecteezy.com/system/resources/thumbnails/015/098/526/small/chinese-clouds-illustration-png.png')] opacity-10 pointer-events-none z-0" />
 
       {/* Animated clouds with parallax effect */}
       <motion.div
@@ -1614,7 +1614,7 @@ export default function Home() {
       {/* Footer with Chinese-inspired wave pattern */}
       <footer className="py-10 px-6 bg-background relative">
         {/* Wave pattern background */}
-        <div className="absolute inset-0 bg-[url('/chinese-wave.png')] bg-repeat-x bg-bottom opacity-10 pointer-events-none" />
+        <div className="absolute inset-0 bg-[url('https://static.vecteezy.com/system/resources/thumbnails/047/600/935/small/abstract-watercolor-ocean-wave-cut-out-stock-png.png')] bg-repeat-x bg-bottom opacity-10 pointer-events-none" />
 
         <div className="container mx-auto">
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">

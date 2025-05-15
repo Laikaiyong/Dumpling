@@ -109,7 +109,7 @@ export default function Dashboard() {
           y: backgroundY,
           scale: patternScale,
         }}>
-        <div className="absolute inset-0 bg-[url('/chinese-pattern.png')] bg-repeat opacity-10"></div>
+        <div className="absolute inset-0 bg-[url('https://static.vecteezy.com/system/resources/thumbnails/015/098/526/small/chinese-clouds-illustration-png.png')] bg-repeat opacity-10"></div>
       </motion.div>
 
       {/* Floating vector shapes */}
@@ -341,7 +341,7 @@ export default function Dashboard() {
               <motion.div
                 className="absolute -bottom-3 left-0 w-32 h-2"
                 style={{
-                  backgroundImage: "url('/brush-stroke.png')",
+                  backgroundImage: "url('https://static.vecteezy.com/system/resources/thumbnails/012/634/568/small_2x/red-acrylic-paint-strokes-for-design-elements-artistic-brush-strokes-for-ornament-and-lower-thirds-isolated-background-png.png')",
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }}
@@ -381,7 +381,7 @@ export default function Dashboard() {
                 <motion.div
                   className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 w-8 h-8 rounded-full"
                   style={{
-                    background: "url('/seal-mark.png')",
+                    background: "url('https://upload.wikimedia.org/wikipedia/commons/5/5e/Chinese_seal_%28zhubai%29.png')",
                     backgroundSize: "contain",
                     backgroundRepeat: "no-repeat",
                   }}
@@ -401,7 +401,7 @@ export default function Dashboard() {
             <motion.div
               className="absolute top-0 right-0 w-24 h-24 opacity-5 z-0 pointer-events-none"
               style={{
-                background: "url('/dragon-corner.png')",
+                background: "url('https://images.vexels.com/media/users/3/282629/isolated/preview/5b4f6600ccbdb881f8870f02419820ec-chinese-new-year-dragon-zodiac-sign.png')",
                 backgroundSize: "contain",
                 backgroundPosition: "top right",
                 backgroundRepeat: "no-repeat",
