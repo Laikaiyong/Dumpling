@@ -60,14 +60,18 @@ At **0.001 SOL per call (~$0.17)**, Dumplings remains profitable while offering 
 ## 🏗️ Architecture
 
 The system consists of:
-- **Frontend** (Next.js) with wallet login and agent templates
-- **Voice Generation** ElevenLabs API for voice generation
-- **LLM Layer** (Fetch.ai) for RAG, chat logic, and general chat
-- **DB** (MongoDB) for storing data from document uploads and other information for Agent usage
-- **DeFi + Token Data** (CoinGecko + GeckoTerminal) for De-Fi and token data
-- **On-Chain Data** (Helius Labs API) for Solana on-chain data
+- **Frontend** (Next.js): Wallet login, agent templates, and billing UI.
+- **Voice** (ElevenLabs): Voice responses and audio agent interaction.
+- **LLM** (Fetch.ai): Handles chat, RAG, and general intelligence.
+- **Intent** (Together.ai): Classifies user intent for smart routing.
+- **Document Processing** (HuggingFace): Converts uploads into searchable knowledge.
+- **Database** (MongoDB): Stores documents, user configs, and agent data.
+- **Token Data** (BirdEye, CoinGecko, GeckoTerminal): Real-time DeFi and token info.
+- **On-Chain Data** (Helius): Tracks wallet and transaction activity on Solana.
+- **Web Data** (Serper): Pulls fresh search results for real-world context.
+- **Smart Contracts** (Solana): Hashes and verifies agent outputs on-chain for transparent, verifiable AI.
   
-![Dumplings Pitch Deck](https://github.com/user-attachments/assets/c56e0d5c-c8d2-43cc-830a-4f07ce8579af)
+![Dumplings Architecture](https://github.com/user-attachments/assets/75570455-a28e-4ed5-bf62-69ffea259541)
 
 ---
 
