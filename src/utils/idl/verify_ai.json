@@ -1,0 +1,501 @@
+{
+  "version": "0.1.0",
+  "name": "verify_ai",
+  "instructions": [
+    {
+      "name": "initialize",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "registerAiModel",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aiModel",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "modelName",
+          "type": "string"
+        },
+        {
+          "name": "modelVersion",
+          "type": "string"
+        },
+        {
+          "name": "modelProvider",
+          "type": "string"
+        },
+        {
+          "name": "verificationMethod",
+          "type": {
+            "defined": "VerificationMethod"
+          }
+        }
+      ]
+    },
+    {
+      "name": "registerContent",
+      "accounts": [
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "content",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "aiModel",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "creator",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "contentHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "contentType",
+          "type": {
+            "defined": "ContentType"
+          }
+        },
+        {
+          "name": "contentMetadata",
+          "type": "string"
+        },
+        {
+          "name": "modelPubkey",
+          "type": "publicKey"
+        }
+      ]
+    },
+    {
+      "name": "verifyContent",
+      "accounts": [
+        {
+          "name": "content",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aiModel",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "verificationProof",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "challengeVerification",
+      "accounts": [
+        {
+          "name": "content",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "challenge",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "challenger",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "challengeReason",
+          "type": "string"
+        },
+        {
+          "name": "evidenceHash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "resolveChallenge",
+      "accounts": [
+        {
+          "name": "challenge",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "content",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aiModel",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "globalState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "resolution",
+          "type": {
+            "defined": "ChallengeResolution"
+          }
+        },
+        {
+          "name": "resolutionNotes",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "GlobalState",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "registeredModelsCount",
+            "type": "u64"
+          },
+          {
+            "name": "verifiedContentsCount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AIModel",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "version",
+            "type": "string"
+          },
+          {
+            "name": "provider",
+            "type": "string"
+          },
+          {
+            "name": "verificationMethod",
+            "type": {
+              "defined": "VerificationMethod"
+            }
+          },
+          {
+            "name": "verifiedContentCount",
+            "type": "u64"
+          },
+          {
+            "name": "authority",
+            "type": "publicKey"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Content",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "contentType",
+            "type": {
+              "defined": "ContentType"
+            }
+          },
+          {
+            "name": "metadata",
+            "type": "string"
+          },
+          {
+            "name": "model",
+            "type": "publicKey"
+          },
+          {
+            "name": "creator",
+            "type": "publicKey"
+          },
+          {
+            "name": "verified",
+            "type": "bool"
+          },
+          {
+            "name": "verificationProof",
+            "type": "bytes"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "verifiedAt",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VerificationChallenge",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "content",
+            "type": "publicKey"
+          },
+          {
+            "name": "challenger",
+            "type": "publicKey"
+          },
+          {
+            "name": "reason",
+            "type": "string"
+          },
+          {
+            "name": "evidenceHash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": "ChallengeStatus"
+            }
+          },
+          {
+            "name": "resolution",
+            "type": {
+              "option": {
+                "defined": "ChallengeResolution"
+              }
+            }
+          },
+          {
+            "name": "resolutionNotes",
+            "type": "string"
+          },
+          {
+            "name": "createdAt",
+            "type": "i64"
+          },
+          {
+            "name": "resolvedAt",
+            "type": "i64"
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "VerificationMethod",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Signature"
+          },
+          {
+            "name": "Watermark"
+          },
+          {
+            "name": "HashMatch"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ContentType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Image"
+          },
+          {
+            "name": "Video"
+          },
+          {
+            "name": "Audio"
+          },
+          {
+            "name": "Text"
+          },
+          {
+            "name": "Other"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ChallengeStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Resolved"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ChallengeResolution",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Upheld"
+          },
+          {
+            "name": "Rejected"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "You are not authorized to perform this action"
+    },
+    {
+      "code": 6001,
+      "name": "ModelMismatch",
+      "msg": "Content is not associated with the specified model"
+    },
+    {
+      "code": 6002,
+      "name": "ContentMismatch",
+      "msg": "Challenge is not associated with the specified content"
+    },
+    {
+      "code": 6003,
+      "name": "ContentNotVerified",
+      "msg": "Content must be verified before it can be challenged"
+    }
+  ],
+  "metadata": {
+    "address": "3tWipTxd8Nbaqrozw3asMma3j5h1vVuwEkWJgzssPvZH"
+  }
+}

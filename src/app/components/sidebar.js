@@ -5,7 +5,7 @@ export default function Sidebar({ activePage }) {
   const menuItems = [
     { path: "/dashboard", label: "Dashboard" },
     { path: "/agent-builder", label: "AI Agent Builder" },
-    { path: "/api-keys", label: "API Keys & Embed" },
+    // { path: "/api-keys", label: "API Keys & Embed" },
     { path: "/billing", label: "Billing" },
   ];
 

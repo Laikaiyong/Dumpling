@@ -8,11 +8,18 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import TokenChart from "@/app/components/tokenChart";
 import { ElevenLabsClient, play } from "elevenlabs";
+import * as anchor from "@project-serum/anchor";
+import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { initVerifyAiProgram, registerContent, verifyAiContent, getContentVerification } from "@/utils/solana";
+import { toast } from "react-hot-toast"; // You'll need to install this package
+import VerificationBadge from "@/app/components/verificationBadge"; // We'll create this component later
+
+
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useSpeech } from "@/app/hooks/useSpeech";
 // Import our new components
 import { AudioPlayer } from "@/app/components/audioPlayer";
-import { VoiceSettings } from "@/app/components/voiceSettings";
+import ApiKeyManager from "@/app/components/apikeyManager";
 
 import SearchResults from "@/app/components/searchResults";
 
@@ -38,6 +45,7 @@ export default function AgentPage() {
   const [saveStatus, setSaveStatus] = useState("");
   const messagesEndRef = useRef(null);
   const router = useRouter();
+  const wallet = useWallet();
   const { publicKey, connected } = useWallet();
 
   const [isRecording, setIsRecording] = useState(false);
@@ -46,6 +54,13 @@ export default function AgentPage() {
   const [voiceId, setVoiceId] = useState("JBFqnCBsd6RMkjVDRZzb"); // Default ElevenLabs voice
   const [showVoiceSettings, setShowVoiceSettings] = useState(false);
   const [messageAudios, setMessageAudios] = useState({});
+
+  const [verifyContent, setVerifyContent] = useState(false);
+  const [contentVerification, setContentVerification] = useState(null);
+  const [verifying, setVerifying] = useState(false);
+  const [contentPubkey, setContentPubkey] = useState(null);
+
+  const anchorWallet = useAnchorWallet();
 
   // Remove the embedType state variable around line 45
   // const [embedType, setEmbedType] = useState("iframe");
@@ -60,6 +75,98 @@ export default function AgentPage() {
   // const [position, setPosition] = useState("right");
   const [copiedCode, setCopiedCode] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [savingApiKey, setSavingApiKey] = useState(false);
+
+  const handleVerifyContent = async (messageIndex) => {
+    if (!connected || !publicKey) {
+      toast.error("Please connect your wallet to verify content");
+      return;
+    }
+
+    if (!anchorWallet) {
+      toast.error("Wallet adapter not initialized properly");
+      return;
+    }
+
+    const message = messages[messageIndex];
+    if (!message || message.role !== "assistant") {
+      toast.error("Only AI responses can be verified");
+      return;
+    }
+
+    setVerifying(true);
+    try {
+      // Initialize Anchor program
+      const program = initVerifyAiProgram(anchorWallet);
+      
+      // Register the content first
+      const modelName = "FetchAI";
+      const modelVersion = "1.0";
+      const metadata = JSON.stringify({
+        agentId: id,
+        timestamp: message.timestamp,
+        userQuery: messages[messageIndex - 1]?.content || ""
+      });
+
+      const registrationResult = await registerContent(
+        program,
+        publicKey,
+        message.content,
+        modelName,
+        modelVersion,
+        metadata
+      );
+
+      if (!registrationResult.success) {
+        throw new Error(registrationResult.error || "Failed to register content");
+      }
+
+      // Save content public key for later use
+      setContentPubkey(registrationResult.contentPubkey);
+
+      // Now verify the content
+      const verificationResult = await verifyAiContent(
+        program,
+        publicKey,
+        message.content,
+        registrationResult.contentPubkey,
+        modelName,
+        modelVersion
+      );
+
+      if (!verificationResult.success) {
+        throw new Error(verificationResult.error || "Content verification failed");
+      }
+
+      // Get verification details
+      const verificationDetails = await getContentVerification(
+        program, 
+        registrationResult.contentPubkey
+      );
+
+      setContentVerification(verificationDetails);
+      
+      // Update the message with verification information
+      const updatedMessages = [...messages];
+      updatedMessages[messageIndex] = {
+        ...message,
+        verified: verificationResult.verified,
+        verificationSignature: verificationResult.signature,
+        contentPubkey: registrationResult.contentPubkey.toString()
+      };
+      
+      setMessages(updatedMessages);
+      toast.success("Content verified successfully!");
+    } catch (error) {
+      console.error("Verification error:", error);
+      toast.error(`Verification failed: ${error.message}`);
+      setContentVerification({ success: false, error: error.message });
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   // Add this function with the other functions in the component
   const copyEmbedCode = () => {
@@ -96,28 +203,45 @@ export default function AgentPage() {
   } = useSpeech(process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY);
 
   const speakText = async (text, messageIndex) => {
-    if (!isGeneratingVoice) return;
-    // If we already have this audio cached, use it
-    if (messageAudios[messageIndex]) {
-      setIsSpeaking(true);
-      setSpeakingMessageId(messageIndex);
-      return;
-    }
-
+    if (!inputMessage.trim() && isSpeaking) return;
+    
     try {
       setIsSpeaking(true);
       setSpeakingMessageId(messageIndex);
-
-      // Speak and get audio URL
-      const audioUrl = await speak(text);
-
-      if (audioUrl) {
-        // Cache the audio URL for this message
-        setMessageAudios((prev) => ({
-          ...prev,
-          [messageIndex]: audioUrl,
-        }));
+      
+      // Direct ElevenLabs API call
+      const response = await fetch(`/api/tools/elevenlabs/speak`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text.substring(0, 5000), // Limit text length
+          voiceId: voiceId || "XB0fDUnXU5powFXDhCwa", // Use the voice from curl example as fallback
+          modelId: "eleven_multilingual_v2",
+          outputFormat: "mp3_44100_128"
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`ElevenLabs API error: ${response.status}`);
       }
+      
+      // Get audio as blob
+      const audioBlob = await response.blob();
+      const audioUrl = URL.createObjectURL(audioBlob);
+      
+      // Cache the audio URL for this message
+      setMessageAudios((prev) => ({
+        ...prev,
+        [messageIndex]: audioUrl,
+      }));
+      
+      // Play the audio
+      const audio = new Audio(audioUrl);
+      audio.onended = handleAudioEnded;
+      audio.play();
+      
     } catch (error) {
       console.error("Error in text-to-speech:", error);
       setIsSpeaking(false);
@@ -266,6 +390,74 @@ export default function AgentPage() {
 
     fetchAgentData();
   }, [id]);
+
+  // Add this handler for adding API keys
+  const handleAddApiKey = async (e) => {
+    e.preventDefault();
+    setSavingApiKey(true);
+
+    const formData = new FormData(e.target);
+    const service = formData.get("service");
+    const apiKey = formData.get("apiKey");
+    let serviceName = service;
+
+    // Handle custom service names
+    if (service === "custom") {
+      const customName = formData.get("customService")?.trim();
+      if (!customName) {
+        alert("Please provide a name for the custom service");
+        setSavingApiKey(false);
+        return;
+      }
+      serviceName = customName;
+    }
+
+    try {
+      const response = await fetch(`/api/agent/${id}/keys`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          service: serviceName,
+          apiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save API key");
+      }
+
+      setShowApiKeyModal(false);
+    } catch (error) {
+      console.error("Error saving API key:", error);
+      alert("Failed to save API key. Please try again.");
+    } finally {
+      setSavingApiKey(false);
+    }
+  };
+
+  // Add handler for saving API keys in bulk (used when deleting a key)
+  const handleSaveApiKeys = async (updatedKeys) => {
+    try {
+      const response = await fetch(`/api/agent/${id}/keys`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          keys: updatedKeys,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update API keys");
+      }
+    } catch (error) {
+      console.error("Error updating API keys:", error);
+      alert("Failed to update API keys. Please try again.");
+    }
+  };
 
   // Auto-scroll to bottom of messages
   useEffect(() => {
@@ -1002,39 +1194,7 @@ export default function AgentPage() {
                 <div className="bg-[#1a1a1a] rounded-lg border border-gray-800 shadow-lg h-[calc(100vh-220px)] flex flex-col">
                   {/* Chat Controls - Add Thought Toggle */}
                   <div className="border-b border-gray-800 p-2 flex justify-between">
-                    <button
-                      onClick={() => setShowVoiceSettings(!showVoiceSettings)}
-                      className={`text-xs px-2 py-1 rounded flex items-center ${
-                        showVoiceSettings
-                          ? "bg-[#ff3131]/20 text-[#ff3131]"
-                          : "bg-[#0f0f0f] text-gray-400 hover:bg-[#222]"
-                      }`}>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-3 w-3 mr-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"
-                        />
-                      </svg>
-                      Voice Settings
-                    </button>
-
-                    <div className="relative">
-                      {showVoiceSettings && (
-                        <VoiceSettings
-                          currentVoiceId={currentVoiceId}
-                          setVoice={setVoice}
-                          onClose={() => setShowVoiceSettings(false)}
-                        />
-                      )}
-                    </div>
-
+                    <div> </div>
                     <button
                       onClick={() => setShowThoughts(!showThoughts)}
                       className={`text-xs px-2 py-1 rounded flex items-center ${
@@ -1086,6 +1246,41 @@ export default function AgentPage() {
                                 <span className="text-xs font-medium">
                                   {message.role === "user" ? "You" : agent.name}
                                 </span>
+
+                                {/* Add verification badge for AI messages */}
+              {message.role === "assistant" && (
+                message.verified ? (
+                  <span className="ml-2 text-xs flex items-center text-green-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Verified on Solana
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => handleVerifyContent(index)}
+                    disabled={verifying}
+                    className="ml-2 text-xs px-2 py-0.5 rounded bg-[#252525] hover:bg-[#303030] text-gray-400 flex items-center"
+                  >
+                    {verifying ? (
+                      <>
+                        <svg className="animate-spin h-3 w-3 mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        Verify on Solana
+                      </>
+                    )}
+                  </button>
+                )
+              )}
                                 <div className="flex items-center">
                                   {message.role === "assistant" && (
                                     <div className="flex items-center">
@@ -1133,6 +1328,22 @@ export default function AgentPage() {
                               <div className="prose prose-invert max-w-none prose-sm">
                                 <ReactMarkdown>{message.content}</ReactMarkdown>
                               </div>
+
+                              {message.verified && (
+            <div className="mt-2 border-t border-gray-800 pt-1 text-xs text-gray-500">
+              <a 
+                href={`https://solscan.io/tx/${message.verificationSignature}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center hover:text-gray-400"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                View on Solscan
+              </a>
+            </div>
+          )}
                             </div>
                           </div>
 
@@ -1373,6 +1584,15 @@ export default function AgentPage() {
                         your AI agent.
                       </p>
                     </div>
+
+                    {/* New API Keys section */}
+                    <ApiKeyManager
+                      agent={agent}
+                      id={id}
+                      publicKey={publicKey}
+                      agentApiKeys={apiKeys}
+                      setAgentApiKeys={setApiKeys}
+                    />
 
                     <div>
                       <h3 className="text-lg font-medium text-[#ffcc00] mb-3">

@@ -38,7 +38,7 @@ export default function Navbar({ isDashboard = false }) {
   ];
 
   // Set up wallet configuration
-  const network = WalletAdapterNetwork.Mainnet;
+  const network = WalletAdapterNetwork.Testnet;
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);
 
   // Configure supported wallets

@@ -6,12 +6,14 @@ import MessageItem from "../../components/messageItem";
 import Link from "next/link";
 import TokenChart from "@/app/components/tokenChart";
 import SearchResults from "@/app/components/searchResults"; // Add this import
+import React from "react"; // Import React to use React.use()
 
 // Add useSpeech hook if you want to standardize voice functionality
 import { useSpeech } from "@/app/hooks/useSpeech";
 
 export default function EmbedPage({ params }) {
-  const { id } = params;
+  const unwrappedParams = React.use(params);
+  const { id } = unwrappedParams;
   const [agent, setAgent] = useState(null);
   const [capabilities, setCapabilities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -76,46 +78,45 @@ export default function EmbedPage({ params }) {
   }, []);
 
   const speakText = async (text, messageIndex) => {
-    if (isSpeaking) return;
-
+    if (!inputMessage.trim() && isSpeaking) return;
+    
     try {
       setIsSpeaking(true);
       setSpeakingMessageId(messageIndex);
-
-      // Create a URL for the text
-      const params = new URLSearchParams({
-        text: text.substring(0, 1000), // Limit to 1000 chars
-        voiceId: voiceId,
+      
+      // Direct ElevenLabs API call
+      const response = await fetch(`/api/tools/elevenlabs/speak`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: text.substring(0, 5000), // Limit text length
+          voiceId: voiceId || "XB0fDUnXU5powFXDhCwa", // Use the voice from curl example as fallback
+          modelId: "eleven_multilingual_v2",
+          outputFormat: "mp3_44100_128"
+        })
       });
-
-      // Fetch the audio
-      const audioRes = await fetch(
-        `/api/tools/xilabs/speech?${params.toString()}`
-      );
-
-      if (!audioRes.ok) {
-        throw new Error("Failed to convert text to speech");
+      
+      if (!response.ok) {
+        throw new Error(`ElevenLabs API error: ${response.status}`);
       }
-
-      // Get the audio blob
-      const audioBlob = await audioRes.blob();
+      
+      // Get audio as blob
+      const audioBlob = await response.blob();
       const audioUrl = URL.createObjectURL(audioBlob);
-
-      // Store audio URL for this message
+      
+      // Cache the audio URL for this message
       setMessageAudios((prev) => ({
         ...prev,
         [messageIndex]: audioUrl,
       }));
-
+      
       // Play the audio
       const audio = new Audio(audioUrl);
-      audio.onended = () => {
-        setIsSpeaking(false);
-        setSpeakingMessageId(null);
-        // Don't revoke here - we'll keep it for replay
-      };
-
+      audio.onended = handleAudioEnded;
       audio.play();
+      
     } catch (error) {
       console.error("Error in text-to-speech:", error);
       setIsSpeaking(false);
@@ -1001,40 +1002,6 @@ export default function EmbedPage({ params }) {
                       style={{ backgroundColor: styling.button }}>
                       Send
                     </motion.button>
-
-                    {/* Text-to-Speech Button (for latest message) */}
-                    {messages.length > 0 &&
-                      messages[messages.length - 1].role === "assistant" && (
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() =>
-                            speakText(messages[messages.length - 1].content)
-                          }
-                          disabled={isSpeaking}
-                          className={`p-3 rounded-md ${
-                            isSpeaking
-                              ? "bg-[#ffcc00] text-black animate-pulse"
-                              : "bg-[#1a1a1a] text-gray-400 hover:bg-[#222]"
-                          }`}
-                          title={
-                            isSpeaking ? "Speaking..." : "Speak Last Message"
-                          }>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 010-7.072m12.728 0l3.536-3.536M6.343 6.343l-3.536 3.536m0 7.072l3.536 3.536M15.536 15.536l3.536 3.536M3 12h1m8-9v1m8 8h1m-9 8v1M5.6 5.6l.7.7m12.1-.7l-.7.7m0 11.4l.7.7m-12.1-.7l-.7.7"
-                            />
-                          </svg>
-                        </motion.button>
-                      )}
                   </div>
                 </div>
               </form>
