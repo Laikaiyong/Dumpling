@@ -67,7 +67,7 @@ The system consists of:
 - **DeFi + Token Data** (CoinGecko + GeckoTerminal) for De-Fi and token data
 - **On-Chain Data** (Helius Labs API) for Solana on-chain data
   
-![Dumplings Pitch Deck](https://github.com/user-attachments/assets/c56e0d5c-c8d2-43cc-830a-4f07ce8579af)
+![Dumplings Architecture](https://github.com/user-attachments/assets/75570455-a28e-4ed5-bf62-69ffea259541)
 
 ---
 
