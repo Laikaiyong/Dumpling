@@ -14,6 +14,7 @@ import Link from "next/link";
 import Navbar from "../components/navbar";
 import Sidebar from "../components/sidebar";
 import AdminButton from "./components/adminButton"; // Import from the main components directory
+import { useWallet } from "@solana/wallet-adapter-react";
 
 // Chinese zodiac animal icons for template categories
 const categoryIcons = {
@@ -35,6 +36,8 @@ export default function AgentBuilder() {
   // Refs for animated elements
   const lanternRefs = useRef([]);
   const containerRef = useRef(null);
+
+  const {publicKey} = useWallet();
 
   // Scroll and mouse animations
   const { scrollY } = useScroll();
@@ -401,6 +404,7 @@ export default function AgentBuilder() {
             {agents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredAgents.map((agent, index) => (
+                  (!agent?.ownerAddress || agent?.ownerAddress == publicKey) &&
                   <motion.div
                     key={agent._id}
                     className="bg-[#1a1a1a] p-6 rounded-lg border border-gray-800 relative overflow-hidden group cursor-pointer"
